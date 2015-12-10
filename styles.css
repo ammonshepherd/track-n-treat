@@ -1,0 +1,24 @@
+body {background-color: #ededed;}
+
+.chart rectangle {
+  fill: steelblue;
+}
+
+.chart text {
+  fill: white;
+  font: 10px sans-serif;
+  text-anchor: end;
+}
+
+.day {
+  background-color: #9aaa19;
+  margin: 4px 0px;
+  padding: 3px;
+  color: white;
+  font-family: sans-serif;
+}
+
+.date {
+  fill: #9aaa19;
+  color: #fff;
+}

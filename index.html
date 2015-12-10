@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Test</title>
+        <link href="styles.css" rel="stylesheet" type="text/css" />
+        <script type="text/javascript" src="d3/d3.v3.js"></script>
+    </head>
+    <body>
+
+        <script type="text/javascript">
+          d3.json("data/track-n-treat.json", function(error, data) {
+
+            /*** This part will manipulate the data. ***/
+            var nested = d3.nest()
+              .key(function(d) { return d.day; })
+              .key(function(d) { return d.time; })
+              .entries(data);
+
+            console.log(nested); 
+
+            /*** This part creates the visualization.  ***/
+            var svg = d3.select('body').append('svg')
+              .attr('width', 2000)
+              .attr('height', 100);
+
+
+            var days = svg.selectAll('rect')
+              .data(nested)
+              .enter().append('rect').classed('date', true);
+
+            days.attr('x', function(d, i) { 
+              if ( i > 0 ) {
+                var prevWidth = days.data()[i-1].values.length * 20;
+                var prevX = this.previousElementSibling.getAttribute('x');
+                return +prevWidth + +prevX + 10; 
+              } else {
+                return 0;
+              }
+            });
+
+            days.attr('width', function(d, i) { return d.values.length * 20; });
+            days.attr('height', 20);
+            days.text(function(d) { return d.key; });
+
+            var times = svg.selectAll('rect')
+              .data(nested)
+              .enter().append('rect').classed('time', true);
+
+
+
+            /*
+            var eats = d3.select("body")
+              .selectAll("div")
+                .data(nested)
+              .enter().append("div")
+                .text(function(d) { return d.key; })
+                .style({width: function(d) { return d.values.length * 100 + 'px'; }})
+              .classed("day", true);
+              */
+
+          }); // This is the closing brace of the function we create in the json method and the closing parenthesis to the json method.
+
+        </script>
+
+
+    </body>
+</html>     
+
