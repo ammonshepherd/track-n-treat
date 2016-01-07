@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Track-n-Treat</title>
+        <link href="styles.css" rel="stylesheet" type="text/css" />
+        <link href='https://fonts.googleapis.com/css?family=Inknut+Antiqua' rel='stylesheet' type='text/css'>
+        <script type="text/javascript" src="d3/d3.v3.js"></script>
+    </head>
+    <body>
+      <h1>Track-n-Treat 2015</h1>
+      <p>Tracking how many candies I ate in the week after Halloween.</p>
+      
+      <!--
+        These two divs are what the svg will be attached to. Having them allows the svg to scroll because it will be longer horizontally than the screen.
+      -->
+      <div id="wrapper">
+        <div id="chart"></div>
+        <div>
+          <p>
+            <a href="index.html">Home</a>
+            <br>
+            <a href="eats.html">How many candies per day?</a>
+          </p>
+        </div>
+      </div>
+
+        <script type="text/javascript">
+          /* 
+            This function surrounds all of the d3 code that makes the graph.
+            Supply the path (relative to this html file) and a variable name
+            for the data (within the function's parenthesis)
+          */
+          d3.json("data/track-n-treat.json", function(data) {
+
+            // Set an arbitrary width and height. We'll use these variables
+            //  later for the dimensions of the main svg element.
+            var w = 2500;
+            var h = 300;
+
+            // The width and height of the box to represent a candy bar
+            var barW = 60;
+            var barH = 55;
+
+            /* We need to nest the data, group the candy by day and time.  Set
+               the new array to the variable 'nested' For understanding
+               nesting: http://bl.ocks.org/shancarter/raw/4748131/ 
+               This will reformat the data from looking like this:
+
+                 [ 
+                   {"day": "2015-11-01", "time": "17:25", "candy": "Heath Bar"},
+                   {"day": "2015-11-01", "time": "17:25", "candy": "Kitkat Bar"},
+                   {"day": "2015-11-01", "time": "20:25", "candy": "Kitkat Bar"},
+                   {"day": "2015-11-02", "time": "17:38", "candy": "Whopper"}, 
+                   ... 
+                 ]
+
+               To look like this:
+                 [
+                   { 'key': "2015-11-01",
+                     'values': [
+                                 {'key': "17:25",
+                                  'values': [
+                                              {'candy': 'Heath Bar', 'day': '2015-11-01', 'time': '17:25'},
+                                              {'candy': 'Kitkat Bar', 'day': '2015-11-01', 'time': '17:25'}
+                                            ]
+                                 },
+                                 {'key': '20:25',
+                                  'values': [
+                                              {'candy': 'Kitkat Bar', 'day': '2015-11-01', 'time': '20:25'}
+                                            ]
+                                 }
+                               ]
+                   },
+                   {'key': '2015-11-02',
+                    'values': [
+                                {'key': '17:38',
+                                 'values': [
+                                            {'candy': 'Whopper', 'day': '2015-11-02', 'time': '17:38'}
+                                           ]
+                                }
+                              ]
+                   }
+                   ...
+                 ]
+
+               Basically, this makes a group of all the lines in the original
+               array that have the same day. Then within that group, it makes a
+               group for each time. It's like an onion, with different layers
+               of data.
+
+            */
+            var nested = d3.nest()
+              //We'll need to group the data points by day
+                .key(function(d) { return d.day; })
+                // and group by time.
+                .key(function(t) { return t.time; })
+                //Plug in the data from the json file that was assigned to the 'data' variable
+                .entries(data);
+
+
+            /* This creates the actual SVG canvas/element where the graph will
+               be displayed.
+               Select the body element (that's the HTML body tag), and append
+               an svg tag/element, give it a CSS class of 'graph', and set the
+               width to the 'w' variable and the height to the 'h' variable set
+               above. Finally, append a group tag/element. This group is offset
+               40 pixels down and 40 pixels over from the original origin
+               point. To better understand transform and translate read the
+               section on SVG Transform as a Coordinate Space Transformation at
+               https://www.dashingd3js.com/svg-group-element-and-d3js 
+               The 40 pixels down and over are for padding (especially useful
+               if there are axis lines and markers).
+             */
+            var svg = d3.select('#chart').append('svg')
+                .attr('class', 'graph')
+                .attr('width', w)
+                .attr('height', h)
+              .append('g')
+                .attr('transform', 'translate(20,20)');
+
+
+            /* This is where all of the magic really happens. The data is used
+               to place the points on the graph, create the bars, etc.
+            */
+            // Start the first position on the x-axis at 0.
+            var xPos = 0;
+            // Declare some variables that we'll use later.
+            var prevDayTime, thisDayTime, thisDay, prevDay;
+            /* Loop through the nested array and objects created above. The
+               first level is the day object.  
+               
+               'forEach' is a function for iterating over arrays.
+               Iterate over the nested array created above. The first time
+               through 'forEach' returns an object where the 'key' is the date and
+               the 'values' is an array of objects.  
+
+               In the second 'forEach', we go through the 'values' of the first level.
+               This returns an object, where the 'key' is the time and the 'values'
+               is an array of objects that contain the date, time and candy. 
+
+               Next, the third forEach of the levelTwo 'values' array gives
+               us each instance when the candy was eaten.  
+            */
+            nested.forEach(function(dayObject) {
+                // Create a group object for each day to sit inside.
+                dayGroup = svg.append('g');
+
+              // Now loop through each day object
+              dayObject.values.forEach(function(timeObject, dayIndex) {
+                // And finally loop through each time object associated with a day
+                timeObject.values.forEach(function(candyObject, timeIndex) {
+
+                  // We need to get the time element for this time through the loop. We'll need to compare this later
+                  thisDayTime = candyObject.day +' '+ candyObject.time;
+                  // Get what day this is about. We'll use this later for comparisons.
+                  thisDay = candyObject.day
+
+                  /* If the current day and time is the same as the previous
+                     day and time, then the x position should be the same.
+                     Later in the code we add 25 to the current x position, so
+                     that the next time through the loop, the x position of the
+                     box is further away from previous box.  We subtract 25 to
+                     put it back to the same position as the
+                     previous time.
+                  */
+                  if (thisDayTime === prevDayTime) {
+                    xPos = xPos - barW - 5;
+                  }
+
+                  // plot the candy box
+                  //dayGroup.append('rect')
+                  dayGroup.append('image')
+                      // Use an image instead of drawing a box
+                      .attr('xlink:href', 'images/' + candyObject.candy + '.jpg')
+                      .attr('class', 'bar')
+                      .attr('x', xPos)
+                      /* Remember the y axis starts from the top of the screen,
+                         so we set the y location of the candy bar box to start
+                         at the highest value of the height (so it starts at
+                         the bottom of the screen), then subract from that
+                         value to move the box up the screen.  
+                         Some time periods have multiple candies (I ate two or
+                         three within one minute), so their x position is the
+                         same, but the y position needs to be higher. To do
+                         this we'll use the array's index number to provide a
+                         variable in a made up formula for increasing the
+                         height. We want the stacked candy boxes to start a
+                         specific point, lets say 200 pixels above the bottom
+                         of the svg 'canvas' that we create. The first candy
+                         for a time will then start at "400 - (35 * 1 + 200)".
+                         That means starting at the bottom of the screen '400',
+                         we'll subtract 200, so half way up the canvas, plus
+                         move it up 35 for some padding. Halfway up the canvas
+                         gives us room for the times and date bars. Subsequent
+                         candy boxes will be bumped up "35 * 2" or "35 * 3"
+                         providing a stacked look.
+
+                         *** Play with the numbers to see how the boxes move up or down. ***
+
+                       */
+
+                      .attr('y', h - (barH * timeIndex + 190))
+                      .attr('width', barW)
+                      .attr('height', barH);
+
+                  // add the times
+                  dayGroup.append('text')
+                     .attr('class', 'time')
+                     // The text of this element is the time, which we get from the array/object
+                     .text(candyObject.time)
+                     .attr('x', xPos)
+                     .attr('y', h - (barW * 2))
+                     .attr('width', barW)
+                     .attr('height', barH);
+
+                  // add the day boxes
+                  if (thisDay !== prevDay) {
+                    dayGroup.append('rect')
+                       .attr('class', 'day')
+                       .attr('x', xPos)
+                       .attr('y', h - 110)
+                       // width is the number of times * some padding
+                       .attr('width', (dayObject.values.length * barW + barW/2))
+                       .attr('height', barH);
+
+                    /* To get the date we'll use d3's default time formating
+                       option. This creates a function that will take a date
+                       object and return it in the format "Month ##" 
+                    */
+                    dateForm = d3.time.format("%b %d")
+                    dayGroup.append('text')
+                       .attr('class', 'date')
+                       // We use Javascript's new Date function to return a string from the object's time
+                       .text(dateForm(new Date(thisDayTime)) )
+                       .attr('x', xPos + 5)
+                       .attr('y', h - barW - 10);
+                  }
+
+                  // If it's the last time of the day, and the last candy for that time, add in a space bumper
+                  if ( ( dayIndex == (dayObject.values.length - 1) ) && ( timeIndex == (timeObject.values.length -1) ))
+                  {
+                    xPos = xPos + barW;
+                    dayGroup.append('rect')
+                      .attr('class', 'bumper')
+                      .attr('x', xPos)
+                      .attr('y', h - 110)
+                      .attr('width', barW)
+                      .attr('height', barH);
+                  }
+
+                  // Increase the x position for the candy bar box
+                  xPos = xPos + barW + 5;
+                  // Set the previous Day's Time variable to this day's time value.
+                  prevDayTime = thisDayTime;
+                  // Set the previous day variable to this day's value.
+                  prevDay = thisDay;
+
+                });
+              });
+            });
+
+          });
+        </script>
+    </body>
+</html>     
+

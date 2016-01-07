@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Test</title>
+        <link href="styles.css" rel="stylesheet" type="text/css" />
+        <script type="text/javascript" src="d3/d3.v3.js"></script>
+    </head>
+    <body>
+
+      <div id="wrap">
+        <h1>Track-n-Treat</h1>
+        <p>How many candies did I eat each day the week after Halloween?</p>
+        <div id="graph"></div>
+        <p>
+          <a href="index.html">Home</a>
+          <br>
+          <a href="day.html">Which candies, and how often per day?</a>
+        </p>
+      </div>
+
+        <script type="text/javascript">
+         
+          /* 
+            This function surrounds all of the d3 code that makes the graph.
+            Supply the path (relative to this html file) and a variable name
+            for the data (within the function's parenthesis)
+            Here we pull in the data from a separate file. d3 calls the main d3
+            method '.json' calls the d3 json method that takes care of loading
+            all of the data from the json file. The json function needs a file
+            path (data/track-n-treat.json) that is relative to where this file
+            is, and a function that creates an internal variable to hold any
+            error messages, and an internal (or local) variable to hold the
+            data.
+          */
+        d3.json("data/track-n-treat.json", function(data) {
+
+          /* Set some variables to use later.
+
+             The 'margin' variable is really an object, so we can call the
+             elements within using dot notation like so: 'margin.top' returns
+             '40', or 'margin.right' will return '40'.  */
+          var margin = {top: 40, right: 40, bottom: 40, left:40},
+              width = 700,
+              height = 300,
+              workingHeight = height - margin.top - margin.bottom;
+
+
+          /* Let's start by making the x axis. We'll use a time scale, since
+             we're plotting days. What this does is set 'x' to be a function that
+             converts dates that we plug into it, into pixels on the canvas.
+
+             The domain represents the minimum and maximum values that exist in
+             the data. The range is the minimum and maximum values as
+             represented on the web page. This is basically a date to pixel
+             converter.
+             For a great write up on how d3 scales work, look here:
+               - http://www.jeromecukier.net/blog/2011/08/11/d3-scales-and-color/
+          */
+          var x = d3.time.scale()
+            /* The minimum date is the first day I ate candy, the maximum date
+               is the last day I ate candy. To calculate the first day, we can
+               get the date from the data array: 'data[0].day' corresponds with
+               the first element in the 'data' array (which is an object), and
+               the value of that objects 'day' key.
+
+               It's helpful to know what the data looks like. The json file looks like this:
+                 [ 
+                   {"day": "2015-11-01", "time": "17:25", "candy": "Heath Bar"},
+                   {"day": "2015-11-01", "time": "17:25", "candy": "Kitkat Bar"},
+                   {"day": "2015-11-01", "time": "20:25", "candy": "Kitkat Bar"},
+                   {"day": "2015-11-02", "time": "17:38", "candy": "Whopper"}, 
+                   ... 
+                 ]
+
+                 This is an array (designated with square brackets []) of
+                 objects (designated with curly braces {}). The object consists
+                 of names (day, time, candy) and their associated values. If we
+                 assign the above to the variable 'array', we can access the
+                 first element of the array with 'array[0]'. That would return
+                 the first line above.
+
+                 To access any element within the object, we can use dot
+                 notation. 'array[0].day' would return '2015-11-01'.
+                 'array[0].time' would return '17:25'. 'array[3].candy' would
+                 return 'Whopper'.
+
+                 *** What would array[2].time return? How would you get the
+                 value "Kitkat Bar" (there are two ways)? ***
+
+                 Since the json file is assigned to the 'data' variable, we can
+                 get the first 'day' by accessing 'data[0].day'. We put that in
+                 the default Javascript 'Date' function to return the date as a
+                 String.
+                 Getting the second day is similar. We can get the last day
+                 from the data in the json file. We just need to get the last
+                 object element in the array, and get the value of the day
+                 element. But how do we specify which is the last element in
+                 the array if we don't know how many elements there are? We
+                 could count, but what if we change the data? We can do a
+                 little math to calculate the last element in the array. The
+                 Javascript builtin '.length' method gives us how many elements
+                 are in an array. Since array elements begin counting at 0, we
+                 just get the length, number of elements, minus 1 to give us
+                 the index of the last element. We can then we put that into
+                 d3's time.day.offset function which adds or subracts a given
+                 amount of days from the day that you input. In our case we'll
+                 offset by one day, so that the axis goes from the first day
+                 until the day after the last day that I ate candy.
+            */
+            .domain([ new Date(data[0].day), d3.time.day.offset(new Date(data[data.length - 1].day), 1)])
+            // The range is from 0 to 620 (700 - 40 - 40). Subtract margins for padding.
+            .rangeRound([0, width - margin.left - margin.right]);
+            /*
+               A visualization of what the domain to range looks like
+
+               2015-11-1      2015-11-4         2015-11-7
+                  |---------------|-----------------|
+                 /                |                  \
+                /                  \                  \
+               |--------------------|------------------|
+               0                  88.5                620
+            */
+
+          // Create an x axis using the scale created above.
+          var xAxis = d3.svg.axis()
+              .scale(x)
+              .orient("bottom")
+              /* Sets the ticks or marks on the x axis. 'd3.time.days' sets a
+                 range of days within the dates used in the scale (above). '1'
+                 means show each day in that range (a '2' would show every
+                 other day in the range). 
+              */
+              .ticks(d3.time.days, 1)
+              // Sets the format for the tick to be a date in the form 'DDD ##'
+              .tickFormat(d3.time.format('%a %d'));
+
+
+          /* The y-axis represents how many candies eaten each day. The height
+             of this axis is determined by the maximum number of candies eaten
+             in a single day.
+
+             A few times I ate multiple candies at the same time. We'll need to
+             get the number of candies for each time period in a day and add
+             them all up. This will determine the max height of the y axis.
+
+             We'll use the d3 'nest' function which manipulates the data array.
+             The 'key' function pulls out all of the separate days as a key,
+             the value is all of the times that are associated with that day.
+             We can then use the rollup function to turn the values into
+             something else. In this case it returns the length of the values
+             array, which is the number of candies eaten that day.
+
+             The 'key' part of the 'nest' function turns the data from this:
+
+                 [ 
+                   {"day": "2015-11-01", "time": "17:25", "candy": "Heath Bar"},
+                   {"day": "2015-11-01", "time": "17:25", "candy": "Kitkat Bar"},
+                   {"day": "2015-11-01", "time": "20:25", "candy": "Kitkat Bar"},
+                   {"day": "2015-11-02", "time": "17:38", "candy": "Whopper"}, 
+                   {"day": "2015-11-02", "time": "18:38", "candy": "Whopper"}, 
+                   ... 
+                 ]
+
+            Into this:
+
+                [
+                  {'key': '2015-11-01',
+                  'values': [
+                       {'day': '2015-11-01', 'time': '17:25', 'candy': 'Heath Bar'},
+                       {'day': '2015-11-01', 'time': '17:25', 'candy': 'Kitkat Bar'},
+                       {'day': '2015-11-01', 'time': '20:25', 'candy': 'Kitkat Bar'},
+                  ]},
+                  {'key': '2015-11-02',
+                  'values': [
+                       {'day': '2015-11-02', 'time': '17:38', 'candy': 'Whopper'}, 
+                       {"day": "2015-11-02", "time": "18:38", "candy": "Whopper"}, 
+                       ...
+                  ]},
+                  ...
+                ]
+
+            And the 'rollup' part of the the 'nest' function turns it into this:
+
+                [
+                  {'key': '2015-11-01',
+                  'values': 3
+                  },
+                  {'key': '2015-11-02',
+                  'values': 2
+                  },
+                  ...
+                ]
+          
+         */
+
+          var timesPerDay = d3.nest()
+            .key(function(d) { return d.day; })
+            .rollup(function(t) { return t.length; })
+            .entries(data);
+
+          /* The d3 'max' function looks at an array and returns the highest
+             value. It takes an array and a function. The array is the
+             'timesPerDay' array we created above. The function allows us to
+             specify which part of the array to count. Here the 'v' stands for
+             the array of day objects, and 'v.values' is the 'values' element
+             within each day object, which holds the number of times a candy
+             was eaten for that day. So 'd3.max' is now just looking at the
+             different 'values' fields and returns the highest number.  
+          */
+          var maxEats = d3.max(timesPerDay, function(v) { return v.values; })
+
+
+          /* We use a regular linear scale for the y axis.
+             Use the max number of candy in a day as the max for the domain.
+          */
+          var y = d3.scale.linear()
+            .domain([0, maxEats ])
+            /* the range is the working height to 0.
+
+            *** What happens if the range is 0 to 'workingHeight' ***
+            */
+            .range([workingHeight, 0]);
+
+          // Create the y axis using the scale above.
+          var yAxis = d3.svg.axis()
+              .scale(y)
+              // Put the axis on the left side
+              .orient('left')
+              .tickPadding(8);
+
+
+          /* This is where the magic happens. We create a variable (because
+             we want to add to it later). 'd3' calls the main d3 method.
+             'select' specifies which part of the DOM we want to target.
+             We're going to target an HTML div tag with the id 'graph'. 
+           */
+          var svg = d3.select('#graph').append('svg')
+              .attr('class', 'graph')
+              .attr('width', width)
+              .attr('height', height)
+              // attach an svg group where the chart will reside
+            .append('g')
+              /* Offset the group for some padding to allow the axes to live
+                 For more on transform and translate:
+                  - https://www.dashingd3js.com/svg-group-element-and-d3js
+                  - (the section on SVG Transform as a Coordinate Space Transformation)
+              */
+              .attr('transform', 'translate(' + margin.left +', ' + margin.right + ')');
+
+          svg.selectAll('.graph')
+              // use the 'timesPerDay' array created above.
+              .data(timesPerDay)
+              // This loops through the array and places the bar on the graph
+            .enter().append('rect')
+              .attr('class', 'bar')
+              // the x position for the bar uses the 'x' function created above, the date and '14' for some padding.
+              .attr('x', function(d) {return x(new Date(d.key)) + 14; })
+              /* Remember the y axis starts from the top of the screen, so we
+                 set the y location of the bar to start at the highest value of
+                 the height (so it starts at the bottom of the screen), then
+                 subract from that value to move the bar up the screen. We move
+                 it up the height of the axis minus the number of candies that
+                 day.
+                 */
+              .attr('y', function(d) { return workingHeight - (workingHeight - y(d.values)); })
+              .attr('width', 24)
+              // The height is the workingHeight minus the number of candies.
+              .attr('height', function(d) { return workingHeight - y(d.values) });
+
+          // This just attaches the x axis to a svg group element
+          svg.append('g')
+            .attr('class', 'x axis')
+            .attr('transform', 'translate(0, ' + workingHeight + ')')
+            .call(xAxis);
+
+          // Attach the y axis
+          svg.append('g')
+            .attr('class', 'y axis')
+            .call(yAxis);
+
+          });
+        </script>
+
+    </body>
+</html>     
+

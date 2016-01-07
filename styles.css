@@ -1,24 +1,69 @@
-body {background-color: #ededed;}
+body {
+  background-color: #111;
+  color: #d90;
+  font-family: 'Inknut Antiqua', serif;
+}
 
-.chart rectangle {
-  fill: steelblue;
+h1 { font-size: 4em; }
+p { font-size: 2em; }
+a { color: #ddbc00; }
+a:hover { color: #c60; }
+
+#wrap {
+  width: 800px;
+  margin: auto;
+}
+
+#wrapper {
+  width: 2500px;
+  height: 200px;
+}
+#chart {background-color:#fff;}
+.chart {
+  width: 2000px;
+  height: 300px;
+  background-color:#fff;
 }
 
 .chart text {
-  fill: white;
+  fill: #333;
   font: 10px sans-serif;
   text-anchor: end;
 }
 
+.graph {
+  fill: #fff;
+}
 .day {
-  background-color: #9aaa19;
-  margin: 4px 0px;
-  padding: 3px;
-  color: white;
-  font-family: sans-serif;
+  fill: #c60;
+  stroke: #111;
+}
+.date {
+  font-size: 2em;
 }
 
-.date {
-  fill: #9aaa19;
-  color: #fff;
+.bar {
+  fill: #d90;
+  stroke: #333;
+  color: #333;
+}
+.candy {
+  stroke: #333;
+  fill: #d90;
+}
+.time {
+  fill: #222;
+  font-size: 1em;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #d90;
+  shape-rendering: crispEdges;
+}
+
+.bumper {
+  fill: none;
+
 }
