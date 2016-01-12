@@ -328,7 +328,7 @@ var timesPerDay = d3.nest()
 
 The `key` part of the `nest` function turns the data from this:
 
-```json
+```javascript
 [ 
 {"day": "2015-11-01", "time": "17:25", "candy": "Heath Bar"},
 {"day": "2015-11-01", "time": "17:25", "candy": "Kitkat Bar"},
@@ -341,7 +341,7 @@ The `key` part of the `nest` function turns the data from this:
 
 Into this:
 
-```json
+```javascript
 [
   {'key': '2015-11-01',
     'values': [
@@ -363,7 +363,7 @@ Into this:
 
 And the `rollup` part of the `nest` function further converts the data into this:
 
-```json
+```javascript
 [
   {'key': '2015-11-01', 'values': 3 },
   {'key': '2015-11-02', 'values': 2 },
