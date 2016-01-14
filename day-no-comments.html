@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Track-n-Treat</title>
+        <link href="styles.css" rel="stylesheet" type="text/css" />
+        <link href='https://fonts.googleapis.com/css?family=Inknut+Antiqua' rel='stylesheet' type='text/css'>
+        <script type="text/javascript" src="d3/d3.v3.js"></script>
+    </head>
+    <body>
+      <h1>Track-n-Treat 2015</h1>
+      <p>Tracking how many candies I ate in the week after Halloween.</p>
+      
+      <div id="wrapper">
+        <div id="chart"></div>
+      </div>
+
+        <script type="text/javascript">
+          d3.json("data/track-n-treat.json", function(data) {
+            var w = 2500;
+            var h = 300;
+
+            var barW = 60;
+            var barH = 55;
+
+            var nested = d3.nest()
+                .key(function(d) { return d.day; })
+                .key(function(t) { return t.time; })
+                .entries(data);
+
+            var svg = d3.select('#chart').append('svg')
+                .attr('class', 'graph')
+                .attr('width', w)
+                .attr('height', h)
+              .append('g')
+                .attr('transform', 'translate(20,20)');
+
+            var xPos = 0;
+            var prevDayTime, thisDayTime, thisDay, prevDay;
+
+            nested.forEach(function(dayObject) {
+                dayGroup = svg.append('g');
+              dayObject.values.forEach(function(timeObject, dayIndex) {
+                timeObject.values.forEach(function(candyObject, timeIndex) {
+
+                  thisDayTime = candyObject.day +' '+ candyObject.time;
+                  thisDay = candyObject.day
+
+                  if (thisDayTime === prevDayTime) {
+                    xPos = xPos - barW - 5;
+                  }
+
+                  dayGroup.append('image')
+                      .attr('xlink:href', 'images/' + candyObject.candy + '.jpg')
+                      .attr('class', 'bar')
+                      .attr('x', xPos)
+                      .attr('y', h - (barH * timeIndex + 190))
+                      .attr('width', barW)
+                      .attr('height', barH);
+
+                  dayGroup.append('text')
+                     .attr('class', 'time')
+                     .text(candyObject.time)
+                       .attr('x', xPos)
+                       .attr('y', h - (barW * 2))
+                       .attr('width', barW)
+                       .attr('height', barH);
+
+                  if (thisDay !== prevDay) {
+                    dayGroup.append('rect')
+                       .attr('class', 'day')
+                       .attr('x', xPos)
+                       .attr('y', h - 110)
+                       .attr('width', (dayObject.values.length * barW + barW/2))
+                       .attr('height', barH);
+
+                    dateForm = d3.time.format("%b %d")
+                    dayGroup.append('text')
+                       .attr('class', 'date')
+                       .text(dateForm(new Date(thisDayTime)) )
+                       .attr('x', xPos + 5)
+                       .attr('y', h - barW - 10);
+                  }
+
+                  if ( ( dayIndex == (dayObject.values.length - 1) ) && ( timeIndex == (timeObject.values.length -1) ))
+                  {
+                    xPos = xPos + barW;
+                    dayGroup.append('rect')
+                      .attr('class', 'bumper')
+                      .attr('x', xPos)
+                      .attr('y', h - 110)
+                      .attr('width', barW)
+                      .attr('height', barH);
+                  }
+
+                  xPos = xPos + barW + 5;
+                  prevDayTime = thisDayTime;
+                  prevDay = thisDay;
+
+                });
+              });
+            });
+
+          });
+        </script>
+    </body>
+</html>     
