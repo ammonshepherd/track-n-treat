@@ -76,7 +76,7 @@ We need to nest the data, and group the candy by day and time. We'll use the d3
 
 Nesting our data will reformat the array from looking like this:
 
-```json
+```javascript
  [ 
    {'day': '2015-11-01', 'time': '17:25', 'candy': 'Heath Bar'},
    {'day': '2015-11-01', 'time': '17:25', 'candy': 'Kitkat Bar'},
@@ -88,7 +88,7 @@ Nesting our data will reformat the array from looking like this:
 
  To look like this:
 
- ```json
+ ```javascript
  [
    { 'key': '2015-11-01',
      'values': [
