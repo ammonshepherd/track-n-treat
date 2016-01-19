@@ -235,8 +235,9 @@ As we loop through each of
 the instances, we'll need to check several things.
  - Is this the last instance at this time?
  - Is this the last instance for this day?
- - Is this the same time and day, but a separate instance (sometimes I had two
-   or three candy bars within the same minute, [ziggy-piggy](http://klipd.com/watch/bill--teds-excellent-adventure/ziggy-piggy-scene))?
+ - Is this the same time and day, but a separate instance? (Sometimes I had two
+   or three candy bars within the same minute,
+   [ziggy-piggy](http://klipd.com/watch/bill--teds-excellent-adventure/ziggy-piggy-scene).)
 
 If the current day and time is the same as the previous day and time, then the x
 position should be the same. Later in the code we add 25 to the current x
