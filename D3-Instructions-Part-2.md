@@ -5,7 +5,7 @@
 This second visualization will answer the above question, and also which candies I
 ate.
 
-So the visualization will show each day, and within each day it will show the
+This visualization will show each day, and within each day it will show the
 time period that I had candy, and an image of the candy will designate what kind of
 candy, and how many at that time period.
 
@@ -38,7 +38,7 @@ We start this file much like the previous.
       </div>
 ```
 
-A new line here than the previous document is the 'link' tag pulling in a Google
+A new line here that wasn't in the previous document is the 'link' tag pulling in a Google
 font. We'll add that as the default font, to give the text a more Halloweeny
 look.
 
@@ -147,7 +147,7 @@ Select the div element with an id of 'graph', append an svg tag/element,
 give it a CSS class of 'graph', and set the width to the 'w' variable and the
 height to the 'h' variable as we assigned above. 
 
-Finally, append a group tag/element. This group is offset 40 pixels down and 40
+Finally, append a group tag/element. This group is offset 20 pixels down and 20
 pixels over from the original origin point. To better understand transform and
 translate read the section on SVG Transform as a Coordinate Space Transformation
 at https://www.dashingd3js.com/svg-group-element-and-d3js 
@@ -236,7 +236,7 @@ the instances, we'll need to check several things.
  - Is this the last instance at this time?
  - Is this the last instance for this day?
  - Is this the same time and day, but a separate instance (sometimes I had two
-   or three candy bars within the same minute)?
+   or three candy bars within the same minute, [ziggy-piggy](http://klipd.com/watch/bill--teds-excellent-adventure/ziggy-piggy-scene))?
 
 If the current day and time is the same as the previous day and time, then the x
 position should be the same. Later in the code we add 25 to the current x
@@ -274,9 +274,15 @@ The first `.attr` tells d3 where to find the image to use; the `xlink:href`
 states there is a path to follow. The next part is the path to the image. We use
 the name of the candy supplied from the `candyObject` object. All of the image
 files have the same name as those used in the data (the json file), so each
-different candy can use the specific image for that candy.
+different candy can use the specific image for that candy. So
+`candyObject.candy` returns 'Kitkat', or 'Snickers' or 'Twix', etc. The `+` plus
+signs in the code combine the string parts (those within the single quotes) with
+the variable.
 
-Assign the svg element a class of 'bar' so we can style it if we need to.
+All of the jpg files are in the 'images' directory, which is in the same
+directory where this file is.
+
+Next, assign the svg element a class of 'bar' so we can style it if we need to.
 
 The x position is dealt with elsewhere. The first time through the loop, for the
 very first instance, it is zero. Subsequent instances have an increased x
@@ -291,7 +297,7 @@ one minute), so their x position is the same, but the y position needs to be
 higher. 
 
 To do this we'll use the array's index number to provide a variable in a made up
-formula for increasing the height. We want the stacked candy boxes to start a
+formula for increasing the height. We want the stacked candy boxes to start at a
 specific point, lets say 190 pixels above the bottom of the svg 'canvas' that we
 create. The first candy for a time will then start at '400 - (35 * 1 + 190)'.
 That means starting at the bottom of the screen '400', we'll subtract 190, so
@@ -322,7 +328,7 @@ is just the time, which we can get from the `candyObject`.
 
 `candyObject = {'day': '2015-11-xx', 'time': 'xx:xx', 'candy': 'Xxxx'}`
 
-Each `candyObject` object has this info associated with it. The 'x' is replaced
+Each `candyObject` object has this info associated with it. The `x`'s in the example above are replaced
 each time it goes through the loop.
 
 The x position, `xPos`, is set and the same as the candy wrapper image.
@@ -341,7 +347,7 @@ then the time labels automatically adjust.
 #### A box for each day
 
 We're placing something on the screen for the candy wrapper image and the time
-each time we loop through. At the times were there are multiple candies at the
+each time we loop through. For the instances when there are multiple candies at the
 same time, there are actually multiple times overlayed. They are in the exact
 same place, so you only see the one. This won't work for the boxes that
 represent the days. We only want one box. 
